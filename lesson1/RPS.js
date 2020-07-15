@@ -46,13 +46,13 @@ const RPSGame = {
         if ((humanMove === "rock" && computerMove === "scissors") ||
             (humanMove === "paper" && computerMove === "rock") ||
             (humanMove === "scissors" && computerMove === "paper")) {
-                this.human.score += 1;
-                console.log("You win!");
+            this.human.score += 1;
+            console.log("You win!");
         } else if ((humanMove === "rock" && computerMove === "paper") ||
             (humanMove === "paper" && computerMove === "scissors") ||
             (humanMove === "scissors" && computerMove === "rock")) {
-                this.computer.score += 1;
-                console.log("Computer wins!");
+            this.computer.score += 1;
+            console.log("Computer wins!");
         } else {
             console.log("It's a tie.");
         }
@@ -60,8 +60,9 @@ const RPSGame = {
     },
 
     playAgain() {
-        let answer = readline.question("Would you like to play again? (y/n) ");
-        return answer[0].toLowerCase() === "y";
+        console.log("Would you like to play again? (y/n)");
+        let answer = readline.question();
+        return answer.toLowerCase()[0] === "y";
     },
 
     continueToNextRound() {
@@ -71,16 +72,19 @@ const RPSGame = {
     },
 
     play() {
-
         do {
+            console.clear();
+
             this.displayWelcomeMessage();
+            this.human.score = 0;
+            this.computer.score = 0;
             let round = 0;
 
-            while (this.human.score !== 5 && this.computer.score !== 5) {
-                let scoreText = `🧑‍ - ${this.human.score}, 💻 - ${this.computer.score}`;
-                console.log(`Round ${round += 1}: ${scoreText}`);
-                
+            while (this.human.score < 5 && this.computer.score < 5) {
+                let scoreText = `Round ${round += 1}: 🧑‍ - ${this.human.score}, 💻 - ${this.computer.score}`;
                 let divideLine = `${"_".repeat(scoreText.length)}`;
+
+                console.log(scoreText);
                 console.log(divideLine);
 
                 this.human.choose();
@@ -89,8 +93,16 @@ const RPSGame = {
 
                 this.continueToNextRound();
             }
-            console.clear();
             
+            let resultText = `\nTotal rounds: ${round}. Score: 🧑‍ - ${this.human.score}, 💻 - ${this.computer.score}`;
+            let winnerText = `${this.human.score > this.computer.score ? "HUMAN" : "COMPUTER"} wins!`;
+            let divideLine = `${"_".repeat(resultText.length)}`;
+
+            console.log(divideLine);
+            console.log(resultText);
+            console.log(winnerText);
+            console.log(divideLine);
+
         } while(this.playAgain());
         
         this.displayGoodbyeMessage();
@@ -102,7 +114,7 @@ RPSGame.play();
 function createPlayer() {
     return {
         move: null,
-        score: 0,
+        score: null,
     };
 }
 
