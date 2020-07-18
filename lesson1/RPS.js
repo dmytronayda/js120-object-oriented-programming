@@ -310,7 +310,7 @@ function createHuman() {
                 Object.entries(playerObject.choices)
                     .forEach(choiceValue => {
                         let [choice, value] = choiceValue;
-                        console.log(`- ${choice} for "${value}"`);
+                        console.log(`- "${choice}" for "${value}"`);
                     });
                 choice = readline.question().toLowerCase()[0];
 
