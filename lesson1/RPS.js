@@ -1,5 +1,15 @@
 const readline = require("readline-sync");
 
+const WINNING_COMBOS = {
+    r: ["s", "l"],
+    p: ["r", "k"],
+    s: ["p", "l"],
+    l: ["p", "k"],
+    k: ["r", "s"],
+};
+
+const ROUNDS_TO_WIN = 5;
+
 const RPSGame = {
     human: createHuman(),
     computer: createComputer(),
@@ -14,28 +24,12 @@ const RPSGame = {
         computer: 0,
     },
 
-    winningCombos: {
-        r: ["s", "l"],
-        p: ["r", "k"],
-        s: ["p", "l"],
-        l: ["p", "k"],
-        k: ["r", "s"],
-    },
-
-    losingCombos: {
-        r: ["p", "k"],
-        p: ["s", "l"],
-        s: ["r", "k"],
-        l: ["s", "r"],
-        k: ["p", "l"],
-    },
-
     updatedComputerChoices : {
         choices: ["r", "p", "s", "l", "k"]
     },
 
     displayWelcomeMessage() {
-        console.log("Welcome to Rock, Paper, Scissors, Lizard, Spock!\nFirst player who gets 5 points wins.\n");
+        console.log(`Welcome to Rock, Paper, Scissors, Lizard, Spock!\nFirst player who gets ${ROUNDS_TO_WIN} points wins.\n`);
     },
 
     displayGoodbyeMessage() {
@@ -48,6 +42,7 @@ const RPSGame = {
     },
 
     printHistoryInBox(humanMoveText, computerMoveText, roundResult) {
+        console.log(roundResult);
         const DASH = "-";
         const SPACE = " ";
         const LONGEST_STR_LENGTH = " COMPUTER - scissors  ".length;
@@ -72,29 +67,42 @@ const RPSGame = {
         this.roundsHistory.forEach(round => console.log(round));
     },
 
-    displayWinner() {
+    isWinner(winningMove, losingMove) {
+        return WINNING_COMBOS[winningMove].includes(losingMove);
+    },
+
+
+    isRoundWinner() {
         let humanMove = this.human.move;
         let computerMove = this.computer.move;
         let roundResult;
 
-        let humanMoveText = `${this.human.toWordChoice(humanMove)}`;
-        let computerMoveText = `${this.computer.toWordChoice(computerMove)}`;
-
-        let isWinner = (winningMove, losingMove) => {
-            return this.winningCombos[winningMove].includes(losingMove);
-        };
-
-        if (isWinner(humanMove, computerMove)) {
-            this.human.score += 1;
+        if (this.isWinner(humanMove, computerMove)) {
             roundResult = " You win!";
-        } else if (isWinner(computerMove, humanMove)) {
-            this.computer.score += 1;
+        } else if (this.isWinner(computerMove, humanMove)) {
             roundResult = " Computer wins!";
         } else {
             roundResult = " It's a tie.";
         }
+        return roundResult;
+    },
 
-        this.printHistoryInBox(humanMoveText, computerMoveText, roundResult);
+    updateScore() {
+        let humanMove = this.human.move;
+        let computerMove = this.computer.move;
+
+        if (this.isWinner(humanMove, computerMove)) {
+            this.human.score += 1;
+        } else if (this.isWinner(computerMove, humanMove)) {
+            this.computer.score += 1;
+        }     
+    },
+    
+    displayHistory() {
+        let humanMoveText = this.human.toWordChoice(this.human.move);
+        let computerMoveText = this.computer.toWordChoice(this.computer.move);
+
+        this.printHistoryInBox(humanMoveText, computerMoveText, this.isRoundWinner());
     },
 
     playAgain() {
@@ -191,7 +199,7 @@ const RPSGame = {
         this.game.round = 0;
     },
 
-    maxScore(num = 5) {
+    maxScore(num = ROUNDS_TO_WIN) {
         return this.human.score < num && this.computer.score < num;
     },
 
@@ -211,7 +219,7 @@ const RPSGame = {
     },
 
     getWinningChoice(){
-        this.winningCombos
+        WINNING_COMBOS;
     },
 
     updateComputerLogic() {
@@ -219,21 +227,23 @@ const RPSGame = {
             let newChoices = this.updatedComputerChoices.choices;
 
             let humanMoves = this.human.movesArr
-              .map(letter => this.human.toWordChoice(letter));
+                .map(letter => this.human.toWordChoice(letter));
             let repeatingHumanChoices = this.movesAnalysis(humanMoves, this.game.totalRoundsPlayed)
-              .match(/\w+ - \d\d\.\d\d/gi)
-              .map(match => match.split(" - "))
-              .filter(subArr => {
-                  let percent = Number(subArr[1]);
-                  if (percent > 20.00) return subArr;
-              })
-              .map(subArr => subArr[0][0]);
+                .match(/\w+ - \d\d\.\d\d/gi)
+                .map(match => match.split(" - "))
+                .filter(subArr => {
+                    let percent = Number(subArr[1]);
+                    if (percent > 20.00) return subArr;
+                })
+                .map(subArr => subArr[0][0]);
             
             let winningChoices = repeatingHumanChoices.map(choice => {
-                let randomOfTwo = Math.floor(Math.random() * 2);
-                choice = this.losingCombos[choice][randomOfTwo];
-                return choice;
-            })
+                let potentialChoices = Object.entries(WINNING_COMBOS);
+                potentialChoices = potentialChoices.filter(variant => variant[0] !== choice);
+                let random = Math.floor(Math.random() * potentialChoices.length);
+                
+                return (potentialChoices[random][0]);
+            });
 
             newChoices = newChoices.concat(winningChoices);
             console.log(newChoices);
@@ -250,21 +260,21 @@ const RPSGame = {
 
     play() {
         console.clear();
-        this.displayWelcomeMessage();
         this.resetGame();
-
+        this.displayWelcomeMessage();
         do {
             this.increaseMatchNum();
             this.resetScores();
             this.resetRound();
             while (this.maxScore()) {
-                console.clear();
                 this.increaseRoundNum();
                 this.printMatchNum();
                 this.printScore();
                 this.human.choose();
                 this.computer.choose();
-                this.displayWinner();
+                this.isRoundWinner();
+                this.updateScore();
+                this.displayHistory();
                 this.continueToNextRound();
             }
             this.printGameWinner();
@@ -312,7 +322,18 @@ function createHuman() {
                         let [choice, value] = choiceValue;
                         console.log(`- "${choice}" for "${value}"`);
                     });
-                choice = readline.question().toLowerCase()[0];
+                choice = readline.question().toLowerCase();
+
+                if (Object.values(playerObject.choices)
+                  .includes(choice)) {
+                      Object.entries(playerObject.choices)
+                      .forEach(keyVal => {
+                          let [key, val] = keyVal;
+                          if(val === choice) {
+                              choice = key;
+                          }
+                      })
+                  };
 
                 if (Object.keys(playerObject.choices)
                     .includes(choice)) break;
