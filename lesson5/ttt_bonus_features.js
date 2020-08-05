@@ -1,24 +1,18 @@
 let readline = require("readline-sync");
 /*
-Write a textual description of the game: 
+Work on the improved prompt for the choices left: 
+- Our code currently uses Array.prototype.join to create the prompt, but it 
+can't insert a different delimiter before the final choice. It isn't smart 
+enough to do what we need. We'll write a joinOr method to make up for this lack. 
+The method should work like this:
 
-- Tic Tac Toe is a 2-player board game
-- The board is a 3 x 3 grid
-- Players take turns marking a square with a marker that identifies the player
-- Traditionally, the player to go first uses the marker X to mark her squares, and the player 
-go second uses the marker O
-- The first player to mark 3 squares in a row with her marker wins the game
-- A row can be horizontal row, a vertical row, or either of the two diagonals 
-(top-left to bottom-right and top-right to bottom-left)
-- There is one Human player and one computer player
-- The human player always moves (places a marker) first in the initial version of our game;
-you can change that later
-
-Identify the Nouns and Verbs (types of objects - nouns; behaviors - verbs)
-
-Nouns: game, board, square, marker, row, player
-Verbs: play, mark, human, computer
+// obj is the context for `joinOr`; replace it with the correct context.
+obj.joinOr([1, 2])                   # => "1 or 2"
+obj.joinOr([1, 2, 3])                # => "1, 2, or 3"
+obj.joinOr([1, 2, 3], '; ')          # => "1; 2; or 3"
+obj.joinOr([1, 2, 3], ', ', 'and')   # => "1, 2, and 3"
 */
+
 class Square {
   static UNUSED_SQUARE = " ";
   static HUMAN_MARKER = "X";
@@ -135,6 +129,15 @@ class TTTGame {
     ["3", "5", "7"], // diagonal: bottom-left to top-right
   ]
 
+  static joinOr(choicesArr, punctuation = ",", adverb = "or") {
+    if (choicesArr.length === 2) return choicesArr.join(` ${adverb} `);
+    if (choicesArr.length > 2) {
+      return choicesArr.slice(0, choicesArr.length - 1).join(`${punctuation} `) + 
+        ` ${adverb} ` + choicesArr[choicesArr.length - 1];
+    }
+    return choicesArr.toString();
+  }
+
   constructor() {
     this.board = new Board();
     this.human = new Human();
@@ -165,7 +168,7 @@ class TTTGame {
 
     while (true) {
       let validChoices = this.board.unusedSquares();
-      const prompt = `Choose a square between (${validChoices.join(", ")}): `;
+      const prompt = `Choose a square between (${TTTGame.joinOr(validChoices, ",", "and")}): `;
       choice = readline.question(prompt);
 
       if (validChoices.includes(choice)) break;
